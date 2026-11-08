@@ -1,0 +1,10 @@
+{
+  "pkg": "0x8ab082c86cdfa84e6d1b5470c93821c6ee8535f0a24dfc938e85cb4206f39765",
+  "corridorId": "0xa4ba9246b0dc99282bc0292ad13e2e0ea2b122b4013510f89c8050dad924fcfd",
+  "adminCapId": "0x24fd60b7b6ef6aab93b3a1a91a18017e2dd1c4bdd8811a87870cf670da8826ca",
+  "operator": "0xce4abf5b69e7b4c7db0318e73b25859307eb0bbbdec0cf380c7574bfd357f80d",
+  "relayerEvm": "0xd1f2CBd5797545FA97410056304CDF1b35865cAe",
+  "openDigest": "8xv4WnC7x9xp3NBQgBqsFzNT28nQJ5NvsQKZ42rrcZr6",
+  "feeBps": 30,
+  "minFee": "10000"
+}
