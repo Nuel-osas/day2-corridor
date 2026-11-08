@@ -1,0 +1,9 @@
+# Written by hand for Corridor: where Circle published this package on Sui testnet.
+# Verified 2026-11-08 against the linkage table of TokenMessengerMinterV2
+# 0x267d3c0c...3c64 (GraphQL testnet) and developers.circle.com/cctp/references/sui-packages.
+
+[published.testnet]
+chain-id = "4c78adac"
+published-at = "0x267d3c0cb776eace2840f27e4d33da9c6d952f9749403f1fe6579f4962ed3c64"
+original-id = "0x267d3c0cb776eace2840f27e4d33da9c6d952f9749403f1fe6579f4962ed3c64"
+version = 1

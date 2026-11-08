@@ -1,0 +1,9 @@
+[package]
+name = "corridor"
+edition = "2024"
+license = "Apache-2.0"
+
+[dependencies]
+# Circle's CCTP V2 Move sources, vendored with the testnet addresses written into
+# each Published.toml. See ../vendor/circle/NOTICE.md.
+token_messenger_minter_v2 = { local = "../vendor/circle/token_messenger_minter_v2" }
