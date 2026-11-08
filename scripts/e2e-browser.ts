@@ -41,8 +41,7 @@ const usdcBefore = await text('[data-testid=usdc]');
 const vaultBefore = await text('[data-testid=vault]');
 console.log(`wallet ${address}: ${usdcBefore}; corridor vault ${vaultBefore}`);
 
-await page.$eval('[data-testid=amount]', (e) => ((e as HTMLInputElement).value = ''));
-await page.click('[data-testid=amount]', { clickCount: 3 });
+await page.click('[data-testid=amount]', { count: 3 });
 await page.type('[data-testid=amount]', AMOUNT);
 await page.type('[data-testid=to]', to);
 console.log('quote:', (await text('[data-testid=quote]')).replace(/\s+/g, ' '));
