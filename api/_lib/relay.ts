@@ -113,7 +113,7 @@ export async function relayOut(digest: string): Promise<Progress> {
 	const balance = await base.getBalance({ address: relayer.account.address });
 	if (balance < MIN_RELAYER_WEI)
 		return { ...p, stage: 'ready', note: `relayer ${relayer.account.address} needs Base Sepolia ETH for gas; the transfer is attested and will mint once it is funded` };
-	const hash = await relayer.writeContract(request);
+	const hash = await relayer.wallet.writeContract(request);
 	const receipt = await base.waitForTransactionReceipt({ hash });
 	if (receipt.status !== 'success') throw new Error(`receiveMessage reverted in ${hash}`);
 	return { ...p, stage: 'minted', destinationTx: hash, paidBy: relayer.account.address };

@@ -27,7 +27,7 @@ export function getRelayer() {
 	const key = process.env.RELAYER_EVM_KEY;
 	if (!key) throw new Error('RELAYER_EVM_KEY is not set');
 	const account = privateKeyToAccount(key as Hex);
-	return createWalletClient({ account, chain: baseSepolia, transport: rpc() });
+	return { account, wallet: createWalletClient({ account, chain: baseSepolia, transport: rpc() }) };
 }
 
 export const MAX_GAS_BUDGET = 100_000_000n; // 0.1 SUI
