@@ -13,14 +13,19 @@
     "inbound": "tsx scripts/inbound.ts",
     "relay": "tsx scripts/relay.ts",
     "status": "tsx scripts/status.ts",
-    "e2e": "tsx scripts/e2e-browser.ts"
+    "e2e": "tsx scripts/e2e-bridge.ts"
   },
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
+    "@circle-fin/adapter-viem-v2": "1.19.3",
+    "@circle-fin/bridge-kit": "1.16.1",
     "@mysten/sui": "2.39.0",
+    "@mysten/wallet-standard": "0.21.36",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "viem": "2.31.7"
+    "viem": "2.56.9"
   },
   "devDependencies": {
     "@types/node": "22",
