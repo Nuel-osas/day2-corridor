@@ -1,0 +1,40 @@
+{
+  "name": "day2-corridor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "move:test": "cd move/corridor && sui move test -e testnet",
+    "open-corridor": "tsx scripts/open-corridor.ts",
+    "send": "tsx scripts/send.ts",
+    "inbound": "tsx scripts/inbound.ts",
+    "relay": "tsx scripts/relay.ts",
+    "status": "tsx scripts/status.ts",
+    "e2e": "tsx scripts/e2e-bridge.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@circle-fin/adapter-viem-v2": "1.19.3",
+    "@circle-fin/bridge-kit": "1.16.1",
+    "@mysten/sui": "2.39.0",
+    "@mysten/wallet-standard": "0.21.36",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "viem": "2.56.9"
+  },
+  "devDependencies": {
+    "@types/node": "22",
+    "@types/react": "18",
+    "@types/react-dom": "18",
+    "@vitejs/plugin-react": "^4.7.0",
+    "puppeteer-core": "^25.13.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vite": "6"
+  }
+}
