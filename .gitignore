@@ -12,3 +12,4 @@ scripts/.e2e-result.json
 scripts/.out
 
 move/vendor/**/Move.lock
+scripts/.e2e-bridge.json
