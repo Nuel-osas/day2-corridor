@@ -1,74 +1,93 @@
 # Day 2 Speaker Notes: Build Your Own Bridge
 
-Keys, Dollars and Bitcoin, Day 2, SuiHub Lagos. Deck: teaching/Day2_Build_Your_Own_Bridge.pptx (13 slides, rebuilt with `pnpm slides`). App: https://day2-corridor.vercel.app. Repo: https://github.com/Nuel-osas/day2-corridor.
+Keys, Dollars and Bitcoin, Day 2, SuiHub Lagos. Deck: teaching/Day2_Build_Your_Own_Bridge.pptx (13 slides, rebuilt with `pnpm slides`). The product we model: https://bridge.setsuna.finance. Class app: https://day2-corridor.vercel.app. Repo: https://github.com/Nuel-osas/day2-corridor.
 
 ## Before class
 
-- Fund the relayer with Base Sepolia ETH (0xd1f2CBd5797545FA97410056304CDF1b35865cAe) and check the corridor card shows "Relayer gas left" above zero. Then `pnpm relay out <digest>` for any transfer still in Ready.
-- Fund the demo Base wallet (0x0E0cacEa53366bF31Bf6938F51ea8E96d1EBBDC4) with Base Sepolia USDC and a little ETH, and run `pnpm inbound 0.5` once.
-- Run `APP_URL=https://day2-corridor.vercel.app pnpm e2e` (it requires the mint by default).
-- Check the operator still has testnet SUI (corridor card or /api/config) and the demo Sui wallet has USDC.
-- Students need Node 22+, pnpm, a browser, and testnet USDC on Sui from faucet.circle.com. MetaMask with Base Sepolia only for the inbound part.
+- Install MetaMask and Slush in the presenting browser. Fund the MetaMask account with Base Sepolia ETH and USDC, and the Slush account with testnet SUI and USDC (faucet.circle.com, faucet.sui.io).
+- Run one transfer per route you will show (Base to Arbitrum, Base to Sui, Sui to Base) and check each reaches Done.
+- Check the Corridor relayer and operator still have gas: /api/config shows both.
+- Students need Node 22+, pnpm, a browser with MetaMask and Slush, and testnet USDC.
 
 ## Run of show (about two hours)
 
 | Slides | Minutes | What happens |
 |---|---|---|
-| 1 to 3 | 15 | The one idea, what is live on Sui |
-| 4 to 6 | 25 | The four-call burn, the Move fee, Bridge Kit compared |
-| 7 to 9 | 25 | Who pays, the relayer, the half-done states (reload and recover live) |
-| 10 to 11 | 10 | Proof on the explorers, the gotchas |
-| 12 | 40 | Everyone bridges with 0 SUI; volunteers open their own corridor |
-| 13 | 5 | Take home, Day 3 preview |
+| 1 to 3 | 15 | The product on bridge.setsuna.finance, the one idea, the six parts |
+| 4 to 5 | 15 | What is live on Sui, the four steps |
+| 6 to 8 | 30 | Wallets, Bridge Kit for EVM, our PTBs for Sui (live transfers) |
+| 9 to 11 | 20 | Who pays gas, the fee, half-done states (reload and find by hash live) |
+| 12 to 13 | 10 | Proof, gotchas, take home |
+| hands on | 30 | Everyone bridges between Sui and Base with their own wallets |
 
 
 ## 01. corridor: Build Your Own Bridge
 
 EXPLAIN
-Yesterday we changed who can sign for an account. Today we move dollars between chains, and we do it as a business: our own bridge, our own fee, and no gas for the user on either side. Everything runs on Sui testnet and Base Sepolia against Circle's real CCTP V2 contracts.
+Today we build a bridge app, the product a user actually opens. https://bridge.setsuna.finance is the finished version of what we build: 28 chains, one wallet per ecosystem, fast or standard, pay gas in USDC, and a history that follows the wallet. Our class app, Corridor, is the same design cut to teaching size, on testnets, with Sui at the centre.
 
 SHOW / DO
-Open https://day2-corridor.vercel.app on the projector. Ask the room to clone https://github.com/Nuel-osas/day2-corridor, run pnpm install, and request testnet USDC on Sui from faucet.circle.com while you talk.
+Open https://bridge.setsuna.finance on the projector, switch it to testnet and walk through one transfer screen. Then open https://day2-corridor.vercel.app: same shape, the code we read today. Ask the room to clone https://github.com/Nuel-osas/day2-corridor and run pnpm install while you talk.
 
 ASK THE ROOM
 Which bridges have you used, and what did they charge you?
 
 EXPECTED ANSWER
-Most people name a liquidity bridge or an exchange. They charged a fee, sometimes a spread, and the user paid gas on both sides. Today we build the same product without holding anyone's money.
+Most people name a liquidity bridge or an exchange. They charged a fee or a spread, and the user paid gas on both sides. Today we build the same product without holding anyone's money.
 
 TRANSITION
 What a bridge really is.
 
 REFERENCES
-https://day2-corridor.vercel.app ; https://github.com/Nuel-osas/day2-corridor
+https://bridge.setsuna.finance ; https://day2-corridor.vercel.app ; https://github.com/Nuel-osas/day2-corridor
 
 ## 02. A bridge is a burn, a proof and a mint.
 
 EXPLAIN
-Three kinds of bridge: lock and mint (a wrapped token backed by a vault someone must guard), liquidity pools (someone must fund both sides), and burn and mint, which only works when the issuer controls the token. Circle issues USDC, so CCTP can burn it here and mint it there. You never custody user funds, which removes the biggest risk a bridge has.
+Three kinds of bridge: lock and mint (a wrapped token backed by a vault someone must guard), liquidity pools (someone must fund both sides), and burn and mint, which only works when the issuer controls the token. Circle issues USDC, so CCTP can burn it here and mint it there. You never hold user funds, which removes the biggest risk a bridge has.
 
 SHOW / DO
-Draw three boxes on the board: Burn on chain A, Circle signs, Mint on chain B. Then circle the gaps around them: who pays gas on A, who submits the mint on B, who charges what. That is our product.
+Draw three boxes: Burn on chain A, Circle signs, Mint on chain B. Then circle what is missing for a user: connecting wallets, picking chains, paying gas on B, knowing where the money is. That is our app.
 
 ASK THE ROOM
-If CCTP does the hard part, what is left for a bridge business?
+If CCTP does the hard part, what is left for a bridge app?
 
 EXPECTED ANSWER
-Fees, paying gas so the user does not need two tokens, relaying the mint, routing, and a status screen that tells the truth when a transfer is half done.
+Wallets on every chain, routing, quotes, fees, gas on the destination, and a tracker that survives a closed tab.
 
 TRANSITION
-What V2 looks like on Sui today.
+The product we are building.
 
 REFERENCES
 https://developers.circle.com/cctp/references/sui-packages
 
-## 03. CCTP V2 on Sui: what is live
+## 03. What a bridge app does
 
 EXPLAIN
-Circle merged "CCTP V2 on Sui" into circlefin/sui-cctp on 5 October and lists the V2 package ids for testnet and mainnet. Sui is domain 8. As a source Sui sends standard transfers only, but Sui finalises in about a second, so Circle attested our standard burn 5 seconds after it executed. Into Sui, fast transfers work: live mints we read paid Circle 1 basis point.
+This is the spec for today. Every part maps to a file in the repo: wallets.tsx, chains.ts, the quote in Bridge.tsx, the speed switch, the gas choice, and transfer.ts for the tracker.
 
 SHOW / DO
-Run the timing yourself: pnpm send 0.1 prints the burn, then the relayer shows Circle's status moving from pending_confirmations to complete within seconds.
+On https://bridge.setsuna.finance point at each part in turn: the wallet drawer with one wallet per ecosystem, the chain pickers, the quote, Fast and Standard, "Pay gas in USDC", and History with search by hash.
+
+ASK THE ROOM
+Which of the six is the hardest to get right?
+
+EXPECTED ANSWER
+The tracker. Everything else is a form. The tracker must be right when the user closes the tab after the burn and comes back a day later on a different device.
+
+TRANSITION
+What CCTP V2 offers on Sui today.
+
+REFERENCES
+https://bridge.setsuna.finance
+
+## 04. CCTP V2 on Sui: what is live
+
+EXPLAIN
+Circle merged "CCTP V2 on Sui" into circlefin/sui-cctp on 5 October and lists V2 package ids for testnet and mainnet. Sui is domain 8. As a source Sui sends standard transfers only, but Sui finalises in about a second, so Circle attested our standard burn 5 seconds after it executed. Into Sui, fast transfers work. On 10 November we read Circle's mainnet state objects and real mainnet transactions with the same calls we write today: a burn on 5 November (CtgJhudiEsBs5FtBwkYaGkQYhMtwgkpQwLBCfUcchvnb) and a mint on 7 November (Gy3393NZCGnzxt88vPUjK6bjmSpWkqVjujjXvkwYoHq8). The app runs on testnet because the class uses test money; mainnet is the same code with mainnet ids.
+
+SHOW / DO
+Open Circle's Sui packages page next to Suiscan: the package ids match the objects on chain.
 
 ASK THE ROOM
 Why would Sui have no fast transfer, if fast is the premium product elsewhere?
@@ -77,201 +96,187 @@ EXPECTED ANSWER
 Fast transfers exist because Ethereum and its rollups take minutes to finalise; Circle takes the reorg risk for a fee. Sui is final in about a second, so a standard transfer from Sui is already fast, at no fee.
 
 TRANSITION
-How the burn is built on Sui.
+One transfer, step by step.
 
 REFERENCES
 https://developers.circle.com/cctp/references/sui-packages ; https://developers.circle.com/cctp/references/contract-addresses ; https://github.com/circlefin/sui-cctp (commit "CCTP V2 on Sui #32")
 
-## 04. Out of Sui: one PTB, four calls
+## 05. Four steps on every route
 
 EXPLAIN
-In V1 you handed a coin to deposit_for_burn. In V2 TokenMessengerMinter never touches the coin. Phase one validates and returns a BurnReceipt hot potato plus the coin; the USDC handler burns the coin with its MintCap and returns a ticket; complete_burn sends the message. Hot potatoes force all of it into one transaction. Our corridor::send goes in front and takes the fee.
+This is the whole engine. On an EVM chain the user approves USDC for TokenMessengerV2, then calls depositForBurn. On Sui there is no approval: the coin goes straight into the burn PTB. Either way the burn names a destination domain and a 32-byte recipient. Then you poll Circle's Iris API with the source domain and the burn hash until the message is attested. Then someone calls receiveMessage on EVM, or the four-call receive PTB on Sui, and pays that chain's gas.
 
 SHOW / DO
-Open shared/corridor.ts, function addSend. Then open the burn digest on Suiscan and show the four MoveCall commands and the events: TransferSentEvent (ours), Burn, MessageSent, DepositForBurn.
+Open src/lib/transfer.ts, function runTransfer: one function walks the four steps and saves the record after each one.
+
+ASK THE ROOM
+Why does the attestation step need no wallet at all?
+
+EXPECTED ANSWER
+It is a read: Iris is a public API. The burn hash plus the source domain is enough to fetch the signed message, from any device, by anyone.
+
+TRANSITION
+Step zero: the wallets.
+
+REFERENCES
+src/lib/transfer.ts ; https://developers.circle.com/cctp
+
+## 06. One wallet per ecosystem
+
+EXPLAIN
+A bridge needs a wallet on each side, and they are different wallets. EIP-6963 lets every EVM wallet announce itself, so MetaMask and Rabby can coexist instead of fighting over window.ethereum. Sui wallets such as Slush register with Wallet Standard; we keep the ones whose chains start with "sui:". We store one connected wallet per ecosystem, so a Base to Sui transfer has MetaMask on one side and Slush on the other.
+
+SHOW / DO
+Open the wallet drawer in the app: two sections, EVM and Sui, each with the wallets this browser has installed.
+
+ASK THE ROOM
+Why not use one EVM wallet for everything?
+
+EXPECTED ANSWER
+Sui does not use EVM keys or EVM transactions. The Sui side needs a Sui wallet to sign a PTB. Even the recipient address is a different shape: 32 bytes on Sui, 20 on EVM.
+
+TRANSITION
+EVM routes in a few lines, with Circle's Bridge Kit.
+
+REFERENCES
+https://eips.ethereum.org/EIPS/eip-6963 ; https://docs.sui.io/standards/wallet-standard
+
+## 07. EVM to EVM with Bridge Kit
+
+EXPLAIN
+For EVM and Solana routes, Circle's Bridge Kit does the four steps in one call. You give it an adapter made from the user's wallet, the two chain names and an amount. It emits an event per step, which we turn into the tracker, and returns a result you can hand back to kit.retry after a failure. Two settings matter for a product: transferSpeed (FAST or SLOW) and useForwarder, which asks Circle to mint on the destination and take its fee from the USDC, so the user needs no gas there.
+
+SHOW / DO
+Bridge 1 USDC from Base Sepolia to Arbitrum Sepolia in the app and watch the four events arrive.
+
+ASK THE ROOM
+Bridge Kit does all of this. Why do we still write our own code for Sui?
+
+EXPECTED ANSWER
+Bridge Kit has adapters for EVM and Solana and only knows Sui's V1 contracts. Any route that touches Sui is ours to build: the burn and mint PTBs on the next slide.
+
+TRANSITION
+The Sui side, in our own PTBs.
+
+REFERENCES
+https://developers.circle.com/bridge-kit ; @circle-fin/bridge-kit, @circle-fin/adapter-viem-v2
+
+## 08. Sui routes: your own PTBs
+
+EXPLAIN
+In V2 TokenMessengerMinter never touches the coin. deposit_for_burn validates and returns a BurnReceipt plus the coin; the USDC handler burns the coin with its MintCap and returns a ticket; complete_burn sends the message. Hot potatoes force all three into one PTB, which the user's Sui wallet signs. Into Sui is receive_message, prepare_mint, handler::mint, complete_mint. With a zero destination caller, anyone can submit the mint, so the user can claim with their own wallet.
+
+SHOW / DO
+Bridge from Sui testnet to Base Sepolia with Slush. Open the burn on Suiscan: three MoveCall commands and the DepositForBurn event.
 
 ASK THE ROOM
 Why does Circle split the burn into tickets instead of one function?
 
 EXPECTED ANSWER
-Upgrades. Integrators link only to the ticket constructors, which are not version gated, and the PTB calls the latest TokenMessengerMinter. Circle can upgrade without breaking every package that depends on it.
+Upgrades. Integrators link to stable entry points while the PTB calls the latest TokenMessengerMinter, so Circle can upgrade without breaking every package that depends on it.
 
 TRANSITION
-Our part: the fee.
+Who pays the gas on the other side.
 
 REFERENCES
-shared/corridor.ts ; move/vendor/circle/token_messenger_minter_v2/sources/deposit_for_burn.move ("Integrator Ticket Pattern")
+src/lib/sui.ts ; https://developers.circle.com/cctp/references/sui-packages
 
-## 05. The fee, enforced by Move
+## 09. Who pays on the other side
 
 EXPLAIN
-send takes the coin by value, so the fee comes out of what actually arrived. The rest goes into Circle's package-auth ticket with our witness, CorridorAuth. Only this module can construct CorridorAuth, so CCTP records keccak256 of its type name as the message sender. That hash, 0xccb6...606b, is how the relayer knows a transfer paid Corridor before it spends any gas.
+Claim it yourself: the user signs receiveMessage with their destination wallet and needs that chain's gas token. Pay gas in USDC: Circle's Forwarding Service submits the mint and takes a fee from the USDC; on 10 November the sandbox quoted about 0.053 USDC for Ethereum Sepolia to Base Sepolia and 0.086 for Base Sepolia to Arbitrum Sepolia, and returned an error for every route that touches Sui. So for Sui routes you run your own relayer, which is what Corridor does: the operator sponsors the Sui burn, so the user signs with 0 SUI, and our relayer pays for the mint.
 
 SHOW / DO
-Open corridor.move and the tests: pnpm move:test runs 10, including fee above the 5 percent ceiling, amount equal to the fee, zero recipient, paused corridor and a foreign admin cap.
+In the app, pick Base Sepolia to Arbitrum Sepolia and turn on "Pay gas in USDC": the quote shows Circle's fee. Pick Sui to Base: the option changes to "Corridor pays", with Corridor's fee.
+
+ASK THE ROOM
+The relayer pays gas for strangers. What stops someone draining it?
+
+EXPECTED ANSWER
+It only mints messages whose sender is Corridor's package and whose destination caller is the relayer. Those messages only exist if the user paid Corridor's fee in the same PTB as the burn.
+
+TRANSITION
+How you charge for all this.
+
+REFERENCES
+https://developers.circle.com/cctp (Forwarding Service) ; api/_lib/relay.ts
+
+## 10. Your fee: Bridge Kit or Move
+
+EXPLAIN
+On EVM routes, Bridge Kit's setCustomFeePolicy takes your fee on the source chain, and Circle keeps 10 percent of it. On Sui routes Bridge Kit cannot help, so corridor::send, our Move function, takes the fee from the coin and hands the rest to CCTP's burn in the same PTB. CCTP then records keccak256 of our witness type as the message sender, so the relayer can prove the fee was paid before it spends any gas.
+
+SHOW / DO
+Open move/corridor/sources/corridor.move, function send. Then the Corridor object on Suiscan: the vault balance grows with every Sui transfer.
 
 ASK THE ROOM
 A user can call Circle directly and skip corridor::send. Is that a hole?
 
 EXPECTED ANSWER
-No. They lose what the fee buys: our relayer only mints messages whose sender is Corridor, and only Corridor messages name our relayer as destination caller. CCTP itself stays open to everyone, which is the point of a public protocol.
+No. They lose what the fee buys: the sponsored gas and our relayer. CCTP stays open to everyone, which is the point of a public protocol.
 
 TRANSITION
-The other way to charge: Circle's Bridge Kit.
+The part users judge you on: half-done transfers.
 
 REFERENCES
-move/corridor/sources/corridor.move ; move/corridor/tests/corridor_tests.move
+move/corridor/sources/corridor.move ; developers.circle.com Bridge Kit custom fees
 
-## 06. Bridge Kit fee or your own Move fee
-
-EXPLAIN
-Circle's Bridge Kit (now part of App Kit) has setCustomFeePolicy with computeFee and resolveFeeRecipientAddress. The fee is taken on the source chain and Circle keeps 10 percent of it. On 6 November its docs listed EVM and Solana adapters and no Sui adapter, so for a Sui route you write the fee yourself, which is what Corridor does.
-
-SHOW / DO
-Show the vault growing: the corridor card in the app reads the Corridor object, and every send adds its fee.
-
-ASK THE ROOM
-When would you still choose Bridge Kit?
-
-EXPECTED ANSWER
-On EVM and Solana routes, when you want Circle's SDK to handle routing, approvals and retries, and you accept the 10 percent share. For Sui, or when the fee must be provable on chain, write the Move.
-
-TRANSITION
-Who pays the gas.
-
-REFERENCES
-developers.circle.com Bridge Kit custom fees (checked 6 Nov 2026)
-
-## 07. Who pays for what
+## 11. Half done is a state, not an error
 
 EXPLAIN
-Two gas bills, two payers. On Sui the operator sponsors the transaction: it is the gas owner and pays from its address balance, so the user signs with zero SUI. On Base the relayer submits receiveMessage and pays the ETH. The relayer is also the destination caller, so nobody else can mint our messages. Inbound is mirrored: the user burns on Base, the operator mints on Sui.
+Once the burn lands, the money is safe: it is attested, about to be minted, or minted. So the screen never says failed after a burn. Save the burn hash the moment the wallet returns it, before waiting for the receipt, so a retry settles that burn instead of sending a second one. Before paying for a mint, ask the destination whether the nonce is used (usedNonces on EVM, is_nonce_used on Sui). While we built Corridor the relayer had no ETH and four attested transfers sat in Ready for two days, safe, until it could pay.
 
 SHOW / DO
-Point at the wallet card: 0.000 SUI and the green "no gas needed" tag. Then the burn on Suiscan: sender is the user, gas sponsor is 0xce4a...f80d.
+Send from Base Sepolia, then reload the page during attestation: the transfer comes back from localStorage. Open a private window, paste the burn hash into Find: same transfer, rebuilt from Iris.
 
 ASK THE ROOM
-The sponsor signs every user transaction. What stops a user from spending the sponsor's money?
-
-EXPECTED ANSWER
-The sponsor policy in api/_lib/server.ts: only Corridor's calls and coin helpers, exactly one corridor::send, gas only from the sponsor's address balance with a budget cap, and nothing the sponsor owns as an input. CCTP also screens the sponsor against its denylist.
-
-TRANSITION
-The relayer, in code.
-
-REFERENCES
-api/_lib/server.ts checkSponsorable ; Suiscan DpUY4FYu...imCBF
-
-## 08. A relayer with no database
-
-EXPLAIN
-The relayer keeps no state. It asks Iris for the message, refuses anything not sent by Corridor, asks Base whether the nonce is already used, simulates, checks its own balance, then sends. On Sui the same check is is_nonce_used, called through a simulation; the u256 is the nonce bytes read big endian, which we confirmed against Circle's own record.
-
-SHOW / DO
-Run pnpm relay out with an old digest: it answers "already minted" and finds the Base transaction from the MessageReceived log, without sending anything.
-
-ASK THE ROOM
-Why not store each transfer in a database as it moves?
-
-EXPECTED ANSWER
-Because then there are two truths. After a crash the database can say "not minted" while the chain says minted, and that is how bridges pay twice. The chain and Circle are the record; the relayer just reads them.
-
-TRANSITION
-What the user sees while it waits.
-
-REFERENCES
-api/_lib/relay.ts ; message_transmitter_v2::state::is_nonce_used
-
-## 09. Half done is a state, not an error
-
-EXPLAIN
-Once the burn lands, the money is safe: it is either about to be minted or already minted. So the screen never says failed after a burn. A 404 from Iris means not indexed yet. Ready means anyone could mint now and our relayer is waiting, for example for gas. While we built Corridor the relayer had no ETH, and four attested transfers sat in Ready, safe, until it could pay: exactly the state this slide is about.
-
-SHOW / DO
-In the app, send 0.2 USDC, then reload the page mid-way. The transfer comes back from localStorage. Open a private window and paste the digest into Recover: same answer, because the relayer reads the chains.
-
-ASK THE ROOM
-A user pays, then sees a red "failed" banner and pays again. What went wrong in that product?
+A user pays, sees a red "failed" banner, and pays again. What went wrong in that product?
 
 EXPECTED ANSWER
 It treated an ambiguous state as a failure. The rule: an ambiguous status shows as pending, never failed, so nobody pays twice.
 
 TRANSITION
-What we verified on testnet.
+What we verified.
 
-## 10. Proof: our transfers
+REFERENCES
+src/lib/transfer.ts ; src/lib/iris.ts
+
+## 12. Proof: real transfers
 
 EXPLAIN
-Every row is a real transaction you can open. The fee lands in the Corridor object's vault; Circle's attestation names Corridor's hash as the sender and our relayer as the destination caller.
+Every row is a real transaction you can open, made through https://day2-corridor.vercel.app by scripts/e2e-bridge.ts: an EVM test wallet announced over EIP-6963 and a Sui test wallet registered with Wallet Standard, the same way MetaMask and Slush connect. The Bridge Kit burn 0x1cd7eea61631906eb4931e1aba75a3d1a8ae6cdfaea2264fca19d83b3c5d3d52 shows the fee split on chain: 0.15 USDC burned, 0.009 to our fee address, 0.001 to Circle. Circle's forwarder sent the Arbitrum mint itself. Each route took 10 to 17 seconds end to end.
 
 SHOW / DO
-Open two of these on the explorers: the Sui burn (sponsor, four calls, events) and the Base mint (called by the relayer).
+Open two on the explorers: the Bridge Kit burn on sepolia.basescan.org (three USDC transfers: Circle, us, the burn) and the user's own Sui mint on Suiscan. Full hashes are in README "Verified so far".
 
 ASK THE ROOM
-Which single field in Circle's attestation lets the relayer trust that a transfer paid Corridor?
+Which field in Circle's message tells the destination who may submit the mint?
 
 EXPECTED ANSWER
-messageSender: keccak256 of the CorridorAuth type name, 0xccb6...606b. Only corridor::send can produce it.
+destinationCaller. Zero means anyone, so the user can claim. Corridor sets it to our relayer, so nobody can front-run the mint it is paying for.
 
 TRANSITION
-Things that will bite you.
+What will bite you, and what to take home.
 
 REFERENCES
 https://github.com/Nuel-osas/day2-corridor#verified-so-far
 
-## 11. Six things that will bite you
+## 13. Six things that will bite you
 
 EXPLAIN
-Each one cost us time this week. The vendoring one is the first wall anyone hits when they try to compile against CCTP on Sui.
+Each one cost real time. The recipient one costs real money: Circle mints to whatever 32 bytes you give it, so an EVM address padded into a Sui address mints to an account nobody holds.
 
 SHOW / DO
-Open move/vendor/circle/NOTICE.md for the vendoring fix, and api/_lib/relay.ts for the balance check that replaced a confusing RPC error.
+Open src/lib/recipient.ts: every typed recipient is checked against the destination chain before anything is burned.
 
 ASK THE ROOM
-Which of the six would cost real users money if you got it wrong?
+Which of the six would cost a user money?
 
 EXPECTED ANSWER
-The sponsor policy and pending versus failed. A loose policy lets users spend the sponsor's funds; a wrong failed state makes users pay twice. The rest cost you time.
+The recipient check and the double burn. The rest cost you time.
 
 TRANSITION
-Build it.
+Build it, then Day 3: Hashi, Bitcoin on Sui.
 
 REFERENCES
 README.md "Gotchas we hit"
-
-## 12. Run Corridor yourself
-
-EXPLAIN
-Two levels. Level one: use the class corridor from the app or the scripts with your own wallet. Level two: publish your own copy of the Move package, open your own corridor with your own fee and relayer, and point shared/deployment.json at it.
-
-SHOW / DO
-Live: pnpm send 0.2 from the terminal, then watch the same transfer appear in the app via Recover.
-
-ASK THE ROOM
-You open your own corridor at 1 percent. What else must you change before your relayer will mint your transfers?
-
-EXPECTED ANSWER
-The relayer must be your EVM key (the destination caller you passed to open), and corridorSender must be computed from your package id. The relayer rejects messages from any other sender.
-
-TRANSITION
-What to take home.
-
-REFERENCES
-https://github.com/Nuel-osas/day2-corridor ; https://day2-corridor.vercel.app
-
-## 13. Circle moves the dollars. You run the corridor.
-
-EXPLAIN
-Three things to remember: the V2 burn on Sui is a four-call PTB you can wrap; your package can be the provable sender; and a bridge is judged on its half-done states, so read the chains instead of keeping your own copy.
-
-SHOW / DO
-Leave the corridor card on screen with the fees collected during class.
-
-ASK THE ROOM
-What would you add before taking Corridor to mainnet?
-
-EXPECTED ANSWER
-Audits, a relayer queue with one job per nonce, monitoring of relayer and sponsor balances, rate limits on the sponsor, a fee withdrawal policy, and mainnet ids checked the same way we checked testnet.
-
-TRANSITION
-Day 3: Hashi. Bitcoin on Sui, and what it takes to build a Bitcoin bridge.

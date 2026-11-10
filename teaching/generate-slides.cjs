@@ -1,52 +1,61 @@
 // Day 2 deck: Build Your Own Bridge (13 slides) and speaker notes. Run: pnpm slides
-// Facts checked on 8 Nov 2026 against Circle's docs, GraphQL on Sui testnet, Base Sepolia RPC and
-// Circle's Iris API. Digests on slide 10 come from our own runs (README "Verified so far").
+// The class builds a multi-chain USDC bridge app in the shape of bridge.setsuna.finance: the user's
+// own wallets, any CCTP V2 chain including Sui, Bridge Kit for EVM routes, our own PTBs for Sui, a
+// choice of who pays the gas, and transfers that survive a closed tab.
+// Facts checked 8 to 10 Nov 2026 against Circle's docs, Iris (sandbox and mainnet), Sui GraphQL and
+// Base Sepolia. Transaction ids on slide 12 come from our own runs (README "Verified so far").
 const path = require('node:path');
 const { createDeck, assets } = require('./deck-kit.cjs');
 
 const LIVE = 'https://day2-corridor.vercel.app';
 const REPO = 'https://github.com/Nuel-osas/day2-corridor';
+const PRODUCT = 'https://bridge.setsuna.finance';
 const SUI_PKGS = 'https://developers.circle.com/cctp/references/sui-packages';
 const EVM_ADDRS = 'https://developers.circle.com/cctp/references/contract-addresses';
 const OUT = process.env.SLIDES_OUT || path.join(__dirname, 'Day2_Build_Your_Own_Bridge.pptx');
 const NOTES = path.join(__dirname, 'day2-speaker-notes.md');
 
-// Filled from real runs. Set MINTED_OUT / MINTED_IN to the destination tx once verified.
+// Real runs. Rows whose env var is unset print as pending, never as done.
 const RUN = {
-	burn: 'DpUY4FYuUbgNHCAxW7oqVeKzdwC9ZNCwkEivVP2imCBF',
-	burnApp: '2ZRMaMbdC7D5RPZaPEZgHNXkFAca4gVq7LrZjLRLoL9X',
-	burnLive: 'DBywjeDodSV9FAMvddLzVFCPAQ9BKpGMvjSHvfDFWsGb',
-	timed: 'C1qH9SEzWwDHPCHf7dVWKiTcNAXuyxGsrRe5HqYMbB5T',
-	mintOut: process.env.MINTED_OUT || null,
-	burnIn: process.env.BURN_IN || null,
-	mintIn: process.env.MINTED_IN || null,
+	corridorBurn: 'DpUY4FYuUbgNHCAxW7oqVeKzdwC9ZNCwkEivVP2imCBF',
+	corridorMint: '0x0a95d8a9f259278d09f59e0b070533c0c5faddecb016e19b41ce641d8e4b7a6b',
+	inboundMint: 'sydqu42S2TK71VcQpBFDq8QyxpoZeZUMd7CtsW8S9XK',
+	mainnetBurn: 'CtgJhudiEsBs5FtBwkYaGkQYhMtwgkpQwLBCfUcchvnb',
+	mainnetMint: 'Gy3393NZCGnzxt88vPUjK6bjmSpWkqVjujjXvkwYoHq8',
+	// Live site, 10 Nov 2026, scripts/e2e-bridge.ts: test wallets injected over EIP-6963 and Wallet Standard.
+	kitBurn: '0x1cd7eea61631906eb4931e1aba75a3d1a8ae6cdfaea2264fca19d83b3c5d3d52', // 0.15 burned, 0.009 to us, 0.001 to Circle
+	forward: '0x306a45f03eb6058f4f190f42866af6f3585fbb708756b4a70ae4e74cdcc1fcea', // Circle's forwarder mints on Arbitrum
+	suiOut: '0xcc7a695a1b479b64fc6c095eb7204920425d8e7aa8fe3c2a266788cb2979d5ba', // user claims on Base (burn DRXw9ymq...zjakR)
+	suiIn: 'CnYYh73wTjCZUyWnMFQFYVMRad3apzCwFGEaMM1DnrKy', // user claims on Sui (burn 0xee8d65be...caa62)
+	corridorOutLive: '0xccbe62a560ef923700746a99d3a621b7f09cd4a5ecf54bdfcb63cbf2b5d29ddc', // relayer mints, 0.14 after 0.01 fee
+	corridorInLive: '4Mrr1e2GmZ6YrgmR5gmtvAWmSsByv2v8Umr5hHqfZCU2', // operator mints on Sui
 };
+const short = (h) => (h && h.length > 50 ? `${h.slice(0, 18)}...${h.slice(-12)}` : h);
 
 const d = createDeck({
-	title: 'Build Your Own Bridge: Native USDC on Sui with CCTP V2, Bridge Fees and Gasless Transfers',
+	title: 'Build Your Own Bridge: A Multi-Chain USDC Bridge on Sui with CCTP V2',
 	subject: 'Keys, Dollars and Bitcoin, Day 2, SuiHub Lagos, November 2026',
 	footerLeft: 'KEYS, DOLLARS AND BITCOIN · SUIHUB LAGOS',
-	footerRight: 'DAY 2 · CORRIDOR',
+	footerRight: 'DAY 2 · BUILD YOUR OWN BRIDGE',
 	total: 13,
 	glow: path.join(assets, 'cover-glow.png'),
 });
-const { C, M, CW, text, mono } = d;
 
 // 01 Cover
 d.cover({
 	glyph: '⇄',
 	name: 'corridor',
 	subtitle: 'Build Your Own Bridge',
-	blurb: 'Native USDC between Sui and Base on Circle CCTP V2. We build Corridor: a fee our Move contract enforces, and gas we pay for our users on both chains.',
+	blurb: 'A USDC bridge app on Circle CCTP V2, built the way bridge.setsuna.finance is: your users\' own wallets, any CCTP chain with Sui included, your fee, and a choice of who pays the gas.',
 	link: LIVE,
 	label: '[ KEYS, DOLLARS AND BITCOIN · DAY 2 · SUIHUB LAGOS ]',
 	note: {
-		explain: 'Yesterday we changed who can sign for an account. Today we move dollars between chains, and we do it as a business: our own bridge, our own fee, and no gas for the user on either side. Everything runs on Sui testnet and Base Sepolia against Circle\'s real CCTP V2 contracts.',
-		show: `Open ${LIVE} on the projector. Ask the room to clone ${REPO}, run pnpm install, and request testnet USDC on Sui from faucet.circle.com while you talk.`,
+		explain: `Today we build a bridge app, the product a user actually opens. ${PRODUCT} is the finished version of what we build: 28 chains, one wallet per ecosystem, fast or standard, pay gas in USDC, and a history that follows the wallet. Our class app, Corridor, is the same design cut to teaching size, on testnets, with Sui at the centre.`,
+		show: `Open ${PRODUCT} on the projector, switch it to testnet and walk through one transfer screen. Then open ${LIVE}: same shape, the code we read today. Ask the room to clone ${REPO} and run pnpm install while you talk.`,
 		ask: 'Which bridges have you used, and what did they charge you?',
-		answer: 'Most people name a liquidity bridge or an exchange. They charged a fee, sometimes a spread, and the user paid gas on both sides. Today we build the same product without holding anyone\'s money.',
+		answer: 'Most people name a liquidity bridge or an exchange. They charged a fee or a spread, and the user paid gas on both sides. Today we build the same product without holding anyone\'s money.',
 		next: 'What a bridge really is.',
-		refs: `${LIVE} ; ${REPO}`,
+		refs: `${PRODUCT} ; ${LIVE} ; ${REPO}`,
 	},
 });
 
@@ -54,347 +63,343 @@ d.cover({
 d.statement({
 	eyebrow: 'THE ONE IDEA',
 	line1: 'A bridge is a burn, a proof and a mint.',
-	line2: 'CCTP does all three.\nYou add the fee and the gas.',
-	body: 'CCTP burns native USDC on one chain, Circle\'s attesters sign the message, and the other chain mints the same amount. No wrapped token, no pool, nothing for you to guard. Your product is everything around it: the fee, the relayer, the status screen. V1 contracts are paused on 1 December 2026, so this is V2.',
+	line2: 'CCTP does all three.\nYou build the product around it.',
+	body: 'CCTP burns native USDC on one chain, Circle\'s attesters sign the message, and the other chain mints the same amount. No wrapped token, no pool, nothing for you to guard. Your product is everything around it: wallets, routes, fees, gas and a status screen that tells the truth. V1 contracts are paused on 1 December 2026, so this is V2.',
 	note: {
-		explain: 'Three kinds of bridge: lock and mint (a wrapped token backed by a vault someone must guard), liquidity pools (someone must fund both sides), and burn and mint, which only works when the issuer controls the token. Circle issues USDC, so CCTP can burn it here and mint it there. You never custody user funds, which removes the biggest risk a bridge has.',
-		show: 'Draw three boxes on the board: Burn on chain A, Circle signs, Mint on chain B. Then circle the gaps around them: who pays gas on A, who submits the mint on B, who charges what. That is our product.',
-		ask: 'If CCTP does the hard part, what is left for a bridge business?',
-		answer: 'Fees, paying gas so the user does not need two tokens, relaying the mint, routing, and a status screen that tells the truth when a transfer is half done.',
-		next: 'What V2 looks like on Sui today.',
+		explain: 'Three kinds of bridge: lock and mint (a wrapped token backed by a vault someone must guard), liquidity pools (someone must fund both sides), and burn and mint, which only works when the issuer controls the token. Circle issues USDC, so CCTP can burn it here and mint it there. You never hold user funds, which removes the biggest risk a bridge has.',
+		show: 'Draw three boxes: Burn on chain A, Circle signs, Mint on chain B. Then circle what is missing for a user: connecting wallets, picking chains, paying gas on B, knowing where the money is. That is our app.',
+		ask: 'If CCTP does the hard part, what is left for a bridge app?',
+		answer: 'Wallets on every chain, routing, quotes, fees, gas on the destination, and a tracker that survives a closed tab.',
+		next: 'The product we are building.',
 		refs: SUI_PKGS,
 	},
 });
 
-// 03 V2 on Sui, checked
+// 03 The product
 {
 	const s = d.slide({
-		eyebrow: 'CHECKED ON 8 NOVEMBER',
-		title: 'CCTP V2 on Sui: what is live',
-		subtitle: 'From Circle\'s docs, then confirmed on chain: objects on Sui testnet, bytecode on Base Sepolia, live burns and mints.',
+		eyebrow: 'THE PRODUCT',
+		title: 'What a bridge app does',
+		subtitle: `The six parts of ${PRODUCT.replace('https://', '')}. Our app has the same six.`,
 		note: {
-			explain: 'Circle merged "CCTP V2 on Sui" into circlefin/sui-cctp on 5 October and lists the V2 package ids for testnet and mainnet. Sui is domain 8. As a source Sui sends standard transfers only, but Sui finalises in about a second, so Circle attested our standard burn 5 seconds after it executed. Into Sui, fast transfers work: live mints we read paid Circle 1 basis point.',
-			show: 'Run the timing yourself: pnpm send 0.1 prints the burn, then the relayer shows Circle\'s status moving from pending_confirmations to complete within seconds.',
+			explain: 'This is the spec for today. Every part maps to a file in the repo: wallets.tsx, chains.ts, the quote in Bridge.tsx, the speed switch, the gas choice, and transfer.ts for the tracker.',
+			show: `On ${PRODUCT} point at each part in turn: the wallet drawer with one wallet per ecosystem, the chain pickers, the quote, Fast and Standard, "Pay gas in USDC", and History with search by hash.`,
+			ask: 'Which of the six is the hardest to get right?',
+			answer: 'The tracker. Everything else is a form. The tracker must be right when the user closes the tab after the burn and comes back a day later on a different device.',
+			next: 'What CCTP V2 offers on Sui today.',
+			refs: PRODUCT,
+		},
+	});
+	d.grid(s, [
+		{ title: 'Connect', body: 'One wallet per ecosystem, side by side: MetaMask for EVM chains, Slush for Sui.' },
+		{ title: 'Route', body: 'Any two CCTP chains. Each has a domain, a USDC address and two contracts.' },
+		{ title: 'Quote', body: 'Amount, fees and what arrives, shown before anything is signed.' },
+		{ title: 'Speed', body: 'Fast costs a small fee. Standard is free. Sui is standard only, and fast anyway.' },
+		{ title: 'Gas', body: 'The user claims on the destination, Circle delivers for USDC, or you pay.' },
+		{ title: 'Track', body: 'Approve, burn, attest, mint. Saved at every step, found again by hash.' },
+	], { y: 2.6, h: 1.95 });
+}
+
+// 04 What is live
+{
+	const s = d.slide({
+		eyebrow: 'CHECKED 8 TO 10 NOVEMBER',
+		title: 'CCTP V2 on Sui: what is live',
+		subtitle: 'From Circle\'s docs, then confirmed on chain: Sui testnet, Sui mainnet and Base Sepolia.',
+		note: {
+			explain: 'Circle merged "CCTP V2 on Sui" into circlefin/sui-cctp on 5 October and lists V2 package ids for testnet and mainnet. Sui is domain 8. As a source Sui sends standard transfers only, but Sui finalises in about a second, so Circle attested our standard burn 5 seconds after it executed. Into Sui, fast transfers work. On 10 November we read Circle\'s mainnet state objects and real mainnet transactions with the same calls we write today: a burn on 5 November (CtgJhudiEsBs5FtBwkYaGkQYhMtwgkpQwLBCfUcchvnb) and a mint on 7 November (Gy3393NZCGnzxt88vPUjK6bjmSpWkqVjujjXvkwYoHq8). The app runs on testnet because the class uses test money; mainnet is the same code with mainnet ids.',
+			show: 'Open Circle\'s Sui packages page next to Suiscan: the package ids match the objects on chain.',
 			ask: 'Why would Sui have no fast transfer, if fast is the premium product elsewhere?',
 			answer: 'Fast transfers exist because Ethereum and its rollups take minutes to finalise; Circle takes the reorg risk for a fee. Sui is final in about a second, so a standard transfer from Sui is already fast, at no fee.',
-			next: 'How the burn is built on Sui.',
+			next: 'One transfer, step by step.',
 			refs: `${SUI_PKGS} ; ${EVM_ADDRS} ; https://github.com/circlefin/sui-cctp (commit "CCTP V2 on Sui #32")`,
 		},
 	});
 	d.table(s, [
 		['', 'What we found', 'How we know'],
-		['Sui domain', '8 (Base Sepolia 6, Ethereum Sepolia 0)', 'Circle docs, Iris messages'],
-		['V2 on Sui testnet', 'Live: TMM 0x267d...3c64, MT 0xe967...bbe', 'GraphQL types, live burns'],
+		['Domains', 'Ethereum 0, Arbitrum 3, Solana 5, Base 6, Sui 8', 'Circle docs, Iris messages'],
+		['V2 on Sui testnet', 'Live: TMM 0x267d...3c64, MT 0xe967...bbe', 'GraphQL types, our burns'],
+		['V2 on Sui mainnet', 'Live: TMM 0xeb14...b830, MT 0x16bc...db87', 'Burn CtgJ...bvnb, mint Gy33...Hoq8'],
 		['Sui as source', 'Standard only, attested in 5 s', 'Our timed burn C1qH...bB5T'],
 		['Into Sui', 'Fast works, 1 bp fee', 'Live mint DHwH...yad'],
 		['V1', 'Burn limits cut 31 Oct, paused 1 Dec 2026', 'Circle blog, 27 Aug'],
-		['Fee endpoint', '/v2/burn/USDC/fees rejects domain 8', 'Iris, 8 Nov'],
-	], { widths: [2.55, 5.0, 4.0], rowH: 0.5, size: 13.5 });
+		['Fee API', 'No quotes for any route touching Sui', 'Iris sandbox, 10 Nov'],
+	], { widths: [2.55, 5.0, 4.0], rowH: 0.47, size: 13.5 });
 }
 
-// 04 One PTB out of Sui
+// 05 One transfer, four steps
 {
 	const s = d.slide({
-		tone: 'dark',
-		eyebrow: 'THE BURN ON SUI',
-		title: 'Out of Sui: one PTB, four calls',
-		subtitle: 'V2 split the burn: CCTP checks, the USDC handler burns, CCTP sends. Into Sui is four calls too: receive_message, prepare_mint, mint, complete_mint.',
+		eyebrow: 'ONE TRANSFER',
+		title: 'Four steps on every route',
+		subtitle: 'Approve, burn, attest, mint. Only the code for each step changes from chain to chain.',
 		note: {
-			explain: 'In V1 you handed a coin to deposit_for_burn. In V2 TokenMessengerMinter never touches the coin. Phase one validates and returns a BurnReceipt hot potato plus the coin; the USDC handler burns the coin with its MintCap and returns a ticket; complete_burn sends the message. Hot potatoes force all of it into one transaction. Our corridor::send goes in front and takes the fee.',
-			show: 'Open shared/corridor.ts, function addSend. Then open the burn digest on Suiscan and show the four MoveCall commands and the events: TransferSentEvent (ours), Burn, MessageSent, DepositForBurn.',
-			ask: 'Why does Circle split the burn into tickets instead of one function?',
-			answer: 'Upgrades. Integrators link only to the ticket constructors, which are not version gated, and the PTB calls the latest TokenMessengerMinter. Circle can upgrade without breaking every package that depends on it.',
-			next: 'Our part: the fee.',
-			refs: 'shared/corridor.ts ; move/vendor/circle/token_messenger_minter_v2/sources/deposit_for_burn.move ("Integrator Ticket Pattern")',
+			explain: 'This is the whole engine. On an EVM chain the user approves USDC for TokenMessengerV2, then calls depositForBurn. On Sui there is no approval: the coin goes straight into the burn PTB. Either way the burn names a destination domain and a 32-byte recipient. Then you poll Circle\'s Iris API with the source domain and the burn hash until the message is attested. Then someone calls receiveMessage on EVM, or the four-call receive PTB on Sui, and pays that chain\'s gas.',
+			show: 'Open src/lib/transfer.ts, function runTransfer: one function walks the four steps and saves the record after each one.',
+			ask: 'Why does the attestation step need no wallet at all?',
+			answer: 'It is a read: Iris is a public API. The burn hash plus the source domain is enough to fetch the signed message, from any device, by anyone.',
+			next: 'Step zero: the wallets.',
+			refs: 'src/lib/transfer.ts ; https://developers.circle.com/cctp',
 		},
 	});
 	d.steps(s, [
-		{ title: 'Take the fee', body: 'corridor::send (ours). Measures the coin, puts the fee in the vault, returns Circle\'s burn ticket.' },
-		{ title: 'Check', body: 'Circle\'s deposit_for_burn, package-auth variant. Domain, limits, fees. Returns BurnReceipt and the coin.' },
-		{ title: 'Burn', body: 'handler::burn. The USDC handler burns the coin with its MintCap and returns a ticket.' },
-		{ title: 'Send', body: 'complete_burn. Sends the CCTP message and emits DepositForBurn.' },
-		{ title: 'Attest', body: 'Circle\'s Iris signs the message. Anyone can now mint on Base.' },
-	], { y: 3.05, h: 3.65, bodySize: 14 });
+		{ title: 'Approve', body: 'EVM only: let the token messenger spend the USDC. Sui needs none: the coin goes into the PTB.' },
+		{ title: 'Burn', body: 'depositForBurn on EVM, a three-call PTB on Sui. Names the destination domain and recipient.' },
+		{ title: 'Attest', body: 'Ask Circle\'s Iris API with the source domain and burn hash until it is signed. A 404 means not indexed yet.' },
+		{ title: 'Mint', body: 'receiveMessage on EVM, a four-call PTB on Sui. Whoever submits it pays the gas.' },
+		{ title: 'Save', body: 'Write the record after every step, so a closed tab never loses a transfer.' },
+	], { y: 3.0, h: 3.7, bodySize: 14 });
 }
 
-// 05 The Move fee
+// 06 Wallets
 {
 	const s = d.slide({
 		tone: 'dark',
-		eyebrow: 'MOVE/CORRIDOR/SOURCES/CORRIDOR.MOVE',
-		title: 'The fee, enforced by Move',
-		subtitle: 'Abridged. The fee is measured from the coin, never from a number the client sends.',
+		eyebrow: 'SRC/LIB/WALLETS.TSX',
+		title: 'One wallet per ecosystem',
+		subtitle: 'Abridged. EVM wallets announce themselves (EIP-6963). Sui wallets register with Wallet Standard.',
 		note: {
-			explain: 'send takes the coin by value, so the fee comes out of what actually arrived. The rest goes into Circle\'s package-auth ticket with our witness, CorridorAuth. Only this module can construct CorridorAuth, so CCTP records keccak256 of its type name as the message sender. That hash, 0xccb6...606b, is how the relayer knows a transfer paid Corridor before it spends any gas.',
-			show: 'Open corridor.move and the tests: pnpm move:test runs 10, including fee above the 5 percent ceiling, amount equal to the fee, zero recipient, paused corridor and a foreign admin cap.',
-			ask: 'A user can call Circle directly and skip corridor::send. Is that a hole?',
-			answer: 'No. They lose what the fee buys: our relayer only mints messages whose sender is Corridor, and only Corridor messages name our relayer as destination caller. CCTP itself stays open to everyone, which is the point of a public protocol.',
-			next: 'The other way to charge: Circle\'s Bridge Kit.',
-			refs: 'move/corridor/sources/corridor.move ; move/corridor/tests/corridor_tests.move',
+			explain: 'A bridge needs a wallet on each side, and they are different wallets. EIP-6963 lets every EVM wallet announce itself, so MetaMask and Rabby can coexist instead of fighting over window.ethereum. Sui wallets such as Slush register with Wallet Standard; we keep the ones whose chains start with "sui:". We store one connected wallet per ecosystem, so a Base to Sui transfer has MetaMask on one side and Slush on the other.',
+			show: 'Open the wallet drawer in the app: two sections, EVM and Sui, each with the wallets this browser has installed.',
+			ask: 'Why not use one EVM wallet for everything?',
+			answer: 'Sui does not use EVM keys or EVM transactions. The Sui side needs a Sui wallet to sign a PTB. Even the recipient address is a different shape: 32 bytes on Sui, 20 on EVM.',
+			next: 'EVM routes in a few lines, with Circle\'s Bridge Kit.',
+			refs: 'https://eips.ethereum.org/EIPS/eip-6963 ; https://docs.sui.io/standards/wallet-standard',
 		},
 	});
 	d.code(s, [
-		'public fun send<T: drop>(',
-		'    self: &mut Corridor<T>, mut coin: Coin<T>,',
-		'    destination_domain: u32, mint_recipient: address,',
-		'    circle_max_fee: u64, min_finality_threshold: u32, ctx: &mut TxContext,',
-		'): DepositForBurnWithPackageAuthTicket<T, CorridorAuth> {',
-		'    assert!(self.is_open(), EPaused);',
-		'    let gross = coin.value();',
-		'    let fee = self.fee_for(gross);             // max(bps, floor)',
-		'    assert!(gross > fee, EAmountNotAboveFee);',
-		'    self.vault.join(coin.split(fee, ctx).into_balance());',
-		'    emit(TransferSentEvent<T> { gross, fee, net: coin.value(), .. });',
-		'    deposit_for_burn::create_deposit_for_burn_with_package_auth_ticket(',
-		'        coin, destination_domain, mint_recipient,',
-		'        self.relayer,                          // destination caller',
-		'        circle_max_fee as u256, min_finality_threshold, vector[],',
-		'        CorridorAuth {},                       // CCTP sender = keccak256(type name)',
-		'    )',
-		'}',
-	].join('\n'), { lang: 'MOVE', size: 10.5, y: 2.78, h: 4.05 });
-}
-
-// 06 Two ways to charge
-{
-	const s = d.slide({
-		eyebrow: 'TWO WAYS TO CHARGE',
-		title: 'Bridge Kit fee or your own Move fee',
-		subtitle: 'Bridge Kit facts from Circle\'s docs on 6 November. Corridor facts from our contract and runs.',
-		note: {
-			explain: 'Circle\'s Bridge Kit (now part of App Kit) has setCustomFeePolicy with computeFee and resolveFeeRecipientAddress. The fee is taken on the source chain and Circle keeps 10 percent of it. On 6 November its docs listed EVM and Solana adapters and no Sui adapter, so for a Sui route you write the fee yourself, which is what Corridor does.',
-			show: 'Show the vault growing: the corridor card in the app reads the Corridor object, and every send adds its fee.',
-			ask: 'When would you still choose Bridge Kit?',
-			answer: 'On EVM and Solana routes, when you want Circle\'s SDK to handle routing, approvals and retries, and you accept the 10 percent share. For Sui, or when the fee must be provable on chain, write the Move.',
-			next: 'Who pays the gas.',
-			refs: 'developers.circle.com Bridge Kit custom fees (checked 6 Nov 2026)',
-		},
-	});
-	d.compare(s,
-		{ title: 'Bridge Kit custom fee', bullets: ['A computeFee callback in setCustomFeePolicy', 'Taken on the source chain by the SDK', 'Circle keeps 10 percent of your fee', 'No Sui adapter in the docs on 6 Nov'] },
-		{ title: 'Your Move fee (Corridor)', bullets: ['Measured from the coin in the burn PTB', 'All of it lands in your onchain vault', 'CCTP names your package as the sender', 'The relayer can prove each fee was paid'] },
-		{ y: 2.6, h: 4.15 });
-}
-
-// 07 Who pays for what
-{
-	const s = d.slide({
-		eyebrow: 'GASLESS FOR THE USER',
-		title: 'Who pays for what',
-		subtitle: 'The user holds USDC and nothing else. Measured on our transfers, 8 November.',
-		note: {
-			explain: 'Two gas bills, two payers. On Sui the operator sponsors the transaction: it is the gas owner and pays from its address balance, so the user signs with zero SUI. On Base the relayer submits receiveMessage and pays the ETH. The relayer is also the destination caller, so nobody else can mint our messages. Inbound is mirrored: the user burns on Base, the operator mints on Sui.',
-			show: 'Point at the wallet card: 0.000 SUI and the green "no gas needed" tag. Then the burn on Suiscan: sender is the user, gas sponsor is 0xce4a...f80d.',
-			ask: 'The sponsor signs every user transaction. What stops a user from spending the sponsor\'s money?',
-			answer: 'The sponsor policy in api/_lib/server.ts: only Corridor\'s calls and coin helpers, exactly one corridor::send, gas only from the sponsor\'s address balance with a budget cap, and nothing the sponsor owns as an input. CCTP also screens the sponsor against its denylist.',
-			next: 'The relayer, in code.',
-			refs: 'api/_lib/server.ts checkSponsorable ; Suiscan DpUY4FYu...imCBF',
-		},
-	});
-	d.table(s, [
-		['Cost', 'Who pays', 'How'],
-		['Sui gas for the burn', 'Corridor operator', 'Sponsored PTB, gas from its address balance'],
-		['Corridor fee', 'User, in USDC', '0.3 percent, min 0.01, kept in the vault'],
-		['Circle fee', 'Nobody (standard)', 'Fast into Sui: about 1 bp, out of the mint'],
-		['Base gas for the mint', 'Relayer', 'receiveMessage; it is the destination caller'],
-		['Sui gas for an inbound mint', 'Corridor operator', 'Four-call receive PTB'],
-		['What the user needs', 'USDC only', 'Our test wallet: 0 SUI, 0 ETH'],
-	], { widths: [3.35, 2.75, 5.45], rowH: 0.5, size: 13.5 });
-}
-
-// 08 The relayer
-{
-	const s = d.slide({
-		tone: 'dark',
-		eyebrow: 'API/_LIB/RELAY.TS',
-		title: 'A relayer with no database',
-		subtitle: 'Abridged. Every call reads Circle and the chain again, so it can be repeated forever and never pays twice.',
-		note: {
-			explain: 'The relayer keeps no state. It asks Iris for the message, refuses anything not sent by Corridor, asks Base whether the nonce is already used, simulates, checks its own balance, then sends. On Sui the same check is is_nonce_used, called through a simulation; the u256 is the nonce bytes read big endian, which we confirmed against Circle\'s own record.',
-			show: 'Run pnpm relay out with an old digest: it answers "already minted" and finds the Base transaction from the MessageReceived log, without sending anything.',
-			ask: 'Why not store each transfer in a database as it moves?',
-			answer: 'Because then there are two truths. After a crash the database can say "not minted" while the chain says minted, and that is how bridges pay twice. The chain and Circle are the record; the relayer just reads them.',
-			next: 'What the user sees while it waits.',
-			refs: 'api/_lib/relay.ts ; message_transmitter_v2::state::is_nonce_used',
-		},
-	});
-	d.code(s, [
-		'export async function relayOut(digest: string) {',
-		'  const m = await irisMessage(SUI.domain, digest);',
-		'  if (!m) return { stage: \'attesting\' };          // 404 = not indexed yet',
-		'  if (m.status !== \'complete\') return { stage: \'attesting\' };',
-		'  if (!eqAddr(body.messageSender, corridorSender()))',
-		'    return { stage: \'rejected\' };                 // not ours, we do not pay',
-		'  if (await usedNonces(m.eventNonce) !== 0n)',
-		'    return { stage: \'minted\', destinationTx: await findEvmMint(m.eventNonce) };',
-		'  const { request } = await base.simulateContract({ functionName: \'receiveMessage\',',
-		'    args: [m.message, m.attestation], account: relayer.account, .. });',
-		'  if (await base.getBalance(relayer) < MIN_RELAYER_WEI)',
-		'    return { stage: \'ready\' };                    // attested, relayer needs gas',
-		'  const hash = await relayer.wallet.writeContract(request);',
-		'  return { stage: \'minted\', destinationTx: hash };',
-		'}',
+		'// EVM: every wallet announces itself (EIP-6963)',
+		'window.addEventListener(\'eip6963:announceProvider\', (e) => {',
+		'  const { info, provider } = (e as CustomEvent).detail;',
+		'  evm.set(info.rdns, { name: info.name, icon: info.icon, provider });',
+		'});',
+		'window.dispatchEvent(new Event(\'eip6963:requestProvider\'));',
+		'',
+		'// Sui: wallets register with Wallet Standard (Slush, Suiet, ...)',
+		'const sui = getWallets().get()',
+		'  .filter((w) => w.chains.some((c) => c.startsWith(\'sui:\')));',
+		'',
+		'// Connect, one per ecosystem',
+		'const [address] = await provider.request({ method: \'eth_requestAccounts\' });',
+		'const { accounts } = await slush.features[\'standard:connect\'].connect();',
+		'connected = { evm: { address, provider }, sui: { address: accounts[0].address, wallet: slush } };',
 	].join('\n'), { size: 10.5, y: 2.78, h: 4.05 });
 }
 
-// 09 Lifecycle
+// 07 Bridge Kit
+{
+	const s = d.slide({
+		tone: 'dark',
+		eyebrow: 'SRC/LIB/KIT.TS',
+		title: 'EVM to EVM with Bridge Kit',
+		subtitle: 'Circle\'s SDK runs approve, burn, attestation and mint for you, with events for the tracker.',
+		note: {
+			explain: 'For EVM and Solana routes, Circle\'s Bridge Kit does the four steps in one call. You give it an adapter made from the user\'s wallet, the two chain names and an amount. It emits an event per step, which we turn into the tracker, and returns a result you can hand back to kit.retry after a failure. Two settings matter for a product: transferSpeed (FAST or SLOW) and useForwarder, which asks Circle to mint on the destination and take its fee from the USDC, so the user needs no gas there.',
+			show: 'Bridge 1 USDC from Base Sepolia to Arbitrum Sepolia in the app and watch the four events arrive.',
+			ask: 'Bridge Kit does all of this. Why do we still write our own code for Sui?',
+			answer: 'Bridge Kit has adapters for EVM and Solana and only knows Sui\'s V1 contracts. Any route that touches Sui is ours to build: the burn and mint PTBs on the next slide.',
+			next: 'The Sui side, in our own PTBs.',
+			refs: 'https://developers.circle.com/bridge-kit ; @circle-fin/bridge-kit, @circle-fin/adapter-viem-v2',
+		},
+	});
+	d.code(s, [
+		'import { BridgeKit } from \'@circle-fin/bridge-kit\';',
+		'import { createViemAdapterFromProvider } from \'@circle-fin/adapter-viem-v2\';',
+		'',
+		'const kit = new BridgeKit();',
+		'const adapter = await createViemAdapterFromProvider({ provider: metamask });',
+		'kit.on(\'*\', (e) => track(e.method, e.values?.txHash)); // approve, burn, fetchAttestation, mint',
+		'',
+		'const result = await kit.bridge({',
+		'  from: { adapter, chain: \'Base_Sepolia\' },',
+		'  to: gasInUsdc',
+		'    ? { chain: \'Arbitrum_Sepolia\', recipientAddress, useForwarder: true } // Circle mints',
+		'    : { adapter, chain: \'Arbitrum_Sepolia\' },                          // the user claims',
+		'  amount: \'1.00\',',
+		'  config: { transferSpeed: \'FAST\' },',
+		'});',
+		'if (result.state !== \'success\') await kit.retry(result, { from: adapter, to: adapter });',
+	].join('\n'), { size: 10.5, y: 2.78, h: 4.05 });
+}
+
+// 08 Sui PTBs
+{
+	const s = d.slide({
+		tone: 'dark',
+		eyebrow: 'SRC/LIB/SUI.TS',
+		title: 'Sui routes: your own PTBs',
+		subtitle: 'Abridged. Out of Sui is three calls the user\'s Sui wallet signs. Into Sui is four.',
+		note: {
+			explain: 'In V2 TokenMessengerMinter never touches the coin. deposit_for_burn validates and returns a BurnReceipt plus the coin; the USDC handler burns the coin with its MintCap and returns a ticket; complete_burn sends the message. Hot potatoes force all three into one PTB, which the user\'s Sui wallet signs. Into Sui is receive_message, prepare_mint, handler::mint, complete_mint. With a zero destination caller, anyone can submit the mint, so the user can claim with their own wallet.',
+			show: 'Bridge from Sui testnet to Base Sepolia with Slush. Open the burn on Suiscan: three MoveCall commands and the DepositForBurn event.',
+			ask: 'Why does Circle split the burn into tickets instead of one function?',
+			answer: 'Upgrades. Integrators link to stable entry points while the PTB calls the latest TokenMessengerMinter, so Circle can upgrade without breaking every package that depends on it.',
+			next: 'Who pays the gas on the other side.',
+			refs: `src/lib/sui.ts ; ${SUI_PKGS}`,
+		},
+	});
+	d.code(s, [
+		'// Sui -> anywhere. Finality 2000: Sui is standard only, and final in a second.',
+		'const coin = tx.add(coinWithBalance({ type: USDC, balance: amount }));',
+		'const [receipt, rest] = tx.moveCall({ target: `${TMM}::deposit_for_burn::deposit_for_burn`,',
+		'  typeArguments: [USDC], arguments: [coin, tx.pure.u32(destDomain), tx.pure.address(recipient32),',
+		'    tx.pure.address(\'0x0\'), tx.pure.u256(maxFee), tx.pure.u32(2000), tx.pure.vector(\'u8\', []),',
+		'    tx.object(TMM_STATE)] });',
+		'const [ticket] = tx.moveCall({ target: `${HANDLER}::handler::burn`,',
+		'  arguments: [tx.object(HANDLER_STATE), receipt, rest, tx.object(\'0x403\'), tx.object(TREASURY)] });',
+		'tx.moveCall({ target: `${TMM}::deposit_for_burn::complete_burn`,',
+		'  typeArguments: [USDC, `${HANDLER}::handler::Auth`], arguments: [ticket, tmmState, mtState] });',
+		'await tx.prepareForSerialization({ client });          // resolve the coins, then the wallet signs',
+		'',
+		'// anywhere -> Sui, after Iris attests:',
+		'// receive_message -> prepare_mint<USDC> -> handler::mint -> complete_mint<USDC, Auth>',
+	].join('\n'), { size: 10.5, y: 2.78, h: 4.05 });
+}
+
+// 09 Who pays the gas
+{
+	const s = d.slide({
+		eyebrow: 'THE GAS',
+		title: 'Who pays on the other side',
+		subtitle: 'The mint costs gas on the destination. Three ways to pay it; the app offers what each route supports.',
+		note: {
+			explain: 'Claim it yourself: the user signs receiveMessage with their destination wallet and needs that chain\'s gas token. Pay gas in USDC: Circle\'s Forwarding Service submits the mint and takes a fee from the USDC; on 10 November the sandbox quoted about 0.053 USDC for Ethereum Sepolia to Base Sepolia and 0.086 for Base Sepolia to Arbitrum Sepolia, and returned an error for every route that touches Sui. So for Sui routes you run your own relayer, which is what Corridor does: the operator sponsors the Sui burn, so the user signs with 0 SUI, and our relayer pays for the mint.',
+			show: 'In the app, pick Base Sepolia to Arbitrum Sepolia and turn on "Pay gas in USDC": the quote shows Circle\'s fee. Pick Sui to Base: the option changes to "Corridor pays", with Corridor\'s fee.',
+			ask: 'The relayer pays gas for strangers. What stops someone draining it?',
+			answer: 'It only mints messages whose sender is Corridor\'s package and whose destination caller is the relayer. Those messages only exist if the user paid Corridor\'s fee in the same PTB as the burn.',
+			next: 'How you charge for all this.',
+			refs: 'https://developers.circle.com/cctp (Forwarding Service) ; api/_lib/relay.ts',
+		},
+	});
+	d.table(s, [
+		['', 'Who submits the mint', 'User needs there', 'Works on'],
+		['Claim it yourself', 'The user\'s wallet', 'Gas (ETH, SUI)', 'Every route'],
+		['Pay gas in USDC', 'Circle Forwarding Service', 'Nothing', 'EVM routes only'],
+		['Corridor pays', 'Our relayer, the destination caller', 'Nothing, 0 SUI to send', 'Sui routes, for our fee'],
+	], { widths: [2.6, 3.3, 2.65, 3.0], rowH: 0.62, size: 14 });
+	d.bar(s, 'Circle\'s fee API answered "Invalid source/destination domain id" for every Sui route on 10 Nov. For Sui, you run the relayer.', 5.75);
+}
+
+// 10 Your fee
+{
+	const s = d.slide({
+		eyebrow: 'THE BUSINESS',
+		title: 'Your fee: Bridge Kit or Move',
+		subtitle: 'Bridge Kit facts from Circle\'s docs on 6 November. Corridor facts from our contract and runs.',
+		note: {
+			explain: 'On EVM routes, Bridge Kit\'s setCustomFeePolicy takes your fee on the source chain, and Circle keeps 10 percent of it. On Sui routes Bridge Kit cannot help, so corridor::send, our Move function, takes the fee from the coin and hands the rest to CCTP\'s burn in the same PTB. CCTP then records keccak256 of our witness type as the message sender, so the relayer can prove the fee was paid before it spends any gas.',
+			show: 'Open move/corridor/sources/corridor.move, function send. Then the Corridor object on Suiscan: the vault balance grows with every Sui transfer.',
+			ask: 'A user can call Circle directly and skip corridor::send. Is that a hole?',
+			answer: 'No. They lose what the fee buys: the sponsored gas and our relayer. CCTP stays open to everyone, which is the point of a public protocol.',
+			next: 'The part users judge you on: half-done transfers.',
+			refs: 'move/corridor/sources/corridor.move ; developers.circle.com Bridge Kit custom fees',
+		},
+	});
+	d.compare(s,
+		{ title: 'Bridge Kit fee (EVM routes)', bullets: ['setCustomFeePolicy with a computeFee callback', 'Taken on the source chain by the SDK', 'Circle keeps 10 percent of your fee', 'No Sui adapter'] },
+		{ title: 'Move fee (Sui routes)', bullets: ['corridor::send, in the same PTB as the burn', 'Measured from the coin, kept in an onchain vault', 'CCTP names your package as the sender', 'Pays for the sponsored gas and the relayer'] },
+		{ y: 2.6, h: 4.15 });
+}
+
+// 11 Half done is a state
 {
 	const s = d.slide({
 		eyebrow: 'A TRANSFER, START TO FINISH',
 		title: 'Half done is a state, not an error',
-		subtitle: 'What the app shows at each stage. Close the tab anywhere: paste the digest and it picks up.',
+		subtitle: 'What the tracker shows at each stage. Close the tab anywhere: the burn hash brings it back.',
 		note: {
-			explain: 'Once the burn lands, the money is safe: it is either about to be minted or already minted. So the screen never says failed after a burn. A 404 from Iris means not indexed yet. Ready means anyone could mint now and our relayer is waiting, for example for gas. While we built Corridor the relayer had no ETH, and four attested transfers sat in Ready, safe, until it could pay: exactly the state this slide is about.',
-			show: 'In the app, send 0.2 USDC, then reload the page mid-way. The transfer comes back from localStorage. Open a private window and paste the digest into Recover: same answer, because the relayer reads the chains.',
-			ask: 'A user pays, then sees a red "failed" banner and pays again. What went wrong in that product?',
+			explain: 'Once the burn lands, the money is safe: it is attested, about to be minted, or minted. So the screen never says failed after a burn. Save the burn hash the moment the wallet returns it, before waiting for the receipt, so a retry settles that burn instead of sending a second one. Before paying for a mint, ask the destination whether the nonce is used (usedNonces on EVM, is_nonce_used on Sui). While we built Corridor the relayer had no ETH and four attested transfers sat in Ready for two days, safe, until it could pay.',
+			show: 'Send from Base Sepolia, then reload the page during attestation: the transfer comes back from localStorage. Open a private window, paste the burn hash into Find: same transfer, rebuilt from Iris.',
+			ask: 'A user pays, sees a red "failed" banner, and pays again. What went wrong in that product?',
 			answer: 'It treated an ambiguous state as a failure. The rule: an ambiguous status shows as pending, never failed, so nobody pays twice.',
-			next: 'What we verified on testnet.',
+			next: 'What we verified.',
+			refs: 'src/lib/transfer.ts ; src/lib/iris.ts',
 		},
 	});
 	d.steps(s, [
-		{ title: 'Burned', body: 'The Sui digest is the receipt. Fee in the vault, USDC burned.' },
+		{ title: 'Burn sent', body: 'Save the hash before waiting. A retry settles it first: never two burns.' },
 		{ title: 'Attesting', body: 'Iris answers 404 or pending. Show pending, never failed.' },
-		{ title: 'Ready', body: 'Attested. Anyone can mint; our relayer is about to, or needs gas.' },
-		{ title: 'Minted', body: 'usedNonces is set. Repeat calls return the same mint.' },
-		{ title: 'Recover', body: 'Any tab, any day: paste the digest, the relayer reads the chains.' },
+		{ title: 'Ready', body: 'Attested, not minted. Claim now, or wait for Circle or the relayer.' },
+		{ title: 'Minted', body: 'The nonce is used on the destination. Check before you pay gas.' },
+		{ title: 'Find it', body: 'Source domain and burn hash: Iris returns the message on any device.' },
 	], { y: 3.0, h: 3.7, bodySize: 14.5 });
 }
 
-// 10 Verified
+// 12 Proof
 {
 	const s = d.slide({
-		eyebrow: 'VERIFIED ON TESTNET',
-		title: 'Proof: our transfers',
-		subtitle: 'Sui testnet and Base Sepolia, 8 November 2026. The user wallet held 0 SUI and 0 ETH throughout.',
+		eyebrow: 'VERIFIED',
+		title: 'Proof: real transfers',
+		subtitle: 'Every route through the live app on 10 November 2026, plus someone else\'s transfer on Sui mainnet.',
 		note: {
-			explain: 'Every row is a real transaction you can open. The fee lands in the Corridor object\'s vault; Circle\'s attestation names Corridor\'s hash as the sender and our relayer as the destination caller.',
-			show: 'Open two of these on the explorers: the Sui burn (sponsor, four calls, events) and the Base mint (called by the relayer).',
-			ask: 'Which single field in Circle\'s attestation lets the relayer trust that a transfer paid Corridor?',
-			answer: 'messageSender: keccak256 of the CorridorAuth type name, 0xccb6...606b. Only corridor::send can produce it.',
-			next: 'Things that will bite you.',
+			explain: `Every row is a real transaction you can open, made through ${LIVE} by scripts/e2e-bridge.ts: an EVM test wallet announced over EIP-6963 and a Sui test wallet registered with Wallet Standard, the same way MetaMask and Slush connect. The Bridge Kit burn ${RUN.kitBurn} shows the fee split on chain: 0.15 USDC burned, 0.009 to our fee address, 0.001 to Circle. Circle\'s forwarder sent the Arbitrum mint itself. Each route took 10 to 17 seconds end to end.`,
+			show: `Open two on the explorers: the Bridge Kit burn on sepolia.basescan.org (three USDC transfers: Circle, us, the burn) and the user's own Sui mint on Suiscan. Full hashes are in README "Verified so far".`,
+			ask: 'Which field in Circle\'s message tells the destination who may submit the mint?',
+			answer: 'destinationCaller. Zero means anyone, so the user can claim. Corridor sets it to our relayer, so nobody can front-run the mint it is paying for.',
+			next: 'What will bite you, and what to take home.',
 			refs: `${REPO}#verified-so-far`,
 		},
 	});
-	const mintRow = RUN.mintOut ? ['Relayer mints on Base', 'Base Sepolia', RUN.mintOut] : ['Relayer mints on Base', 'Base Sepolia', 'pending: relayer funding, rerun pnpm relay'];
-	const inRow = RUN.mintIn ? ['Base to Sui, relayer pays SUI', 'Sui testnet', RUN.mintIn] : ['Base to Sui, relayer pays SUI', 'Sui testnet', 'pending: demo Base wallet funding'];
+	const row = (label, chain, tx) => [label, chain, tx ? short(tx) : 'pending'];
 	d.table(s, [
-		['Step', 'Chain', 'Transaction'],
-		['Sponsored burn, 0.25 in, 0.01 fee', 'Sui testnet', RUN.burn],
-		['Same, through the app (pnpm e2e)', 'Sui testnet', RUN.burnApp],
-		['Same, on the live site', 'Sui testnet', RUN.burnLive],
-		['Burn to attestation in 5 seconds', 'Sui testnet', RUN.timed],
-		mintRow,
-		inRow,
-	], { widths: [3.9, 1.95, 5.7], rowH: 0.5, size: 13, monoCols: [2] });
+		['Route', 'Chain', 'Transaction'],
+		row('Bridge Kit burn with our fee', 'Base Sepolia', RUN.kitBurn),
+		row('Base to Arbitrum, Circle delivers', 'Arbitrum Sepolia', RUN.forward),
+		row('Sui to Base, user claims', 'Base Sepolia', RUN.suiOut),
+		row('Base to Sui, user claims', 'Sui testnet', RUN.suiIn),
+		row('Sui to Base, Corridor pays (0 SUI)', 'Base Sepolia', RUN.corridorOutLive),
+		row('Base to Sui, Corridor pays', 'Sui testnet', RUN.corridorInLive),
+		row('Mainnet: someone\'s Sui mint', 'Sui mainnet', RUN.mainnetMint),
+	], { widths: [4.2, 2.15, 5.2], rowH: 0.47, size: 13, monoCols: [2] });
 }
 
-// 11 Gotchas
+// 13 Gotchas and take home
 {
 	const s = d.slide({
 		eyebrow: 'GOTCHAS',
 		title: 'Six things that will bite you',
-		subtitle: 'All of them came up while building and running Corridor.',
+		subtitle: 'All of them came up building Corridor and bridge.setsuna.finance.',
 		note: {
-			explain: 'Each one cost us time this week. The vendoring one is the first wall anyone hits when they try to compile against CCTP on Sui.',
-			show: 'Open move/vendor/circle/NOTICE.md for the vendoring fix, and api/_lib/relay.ts for the balance check that replaced a confusing RPC error.',
-			ask: 'Which of the six would cost real users money if you got it wrong?',
-			answer: 'The sponsor policy and pending versus failed. A loose policy lets users spend the sponsor\'s funds; a wrong failed state makes users pay twice. The rest cost you time.',
-			next: 'Build it.',
+			explain: 'Each one cost real time. The recipient one costs real money: Circle mints to whatever 32 bytes you give it, so an EVM address padded into a Sui address mints to an account nobody holds.',
+			show: 'Open src/lib/recipient.ts: every typed recipient is checked against the destination chain before anything is burned.',
+			ask: 'Which of the six would cost a user money?',
+			answer: 'The recipient check and the double burn. The rest cost you time.',
+			next: 'Build it, then Day 3: Hashi, Bitcoin on Sui.',
 			refs: 'README.md "Gotchas we hit"',
 		},
 	});
 	d.grid(s, [
-		{ title: 'V2 is not V1', body: 'The coin goes to the USDC handler, not deposit_for_burn. V1 code and its five-call receive fail on V2.' },
-		{ title: 'No Published.toml', body: 'Vendor Circle\'s sources, write the testnet addresses yourself, strip their inline tests.' },
-		{ title: 'Sender is a hash', body: 'Package auth writes keccak256 of the witness type name, not your package id.' },
-		{ title: 'Caller cuts both ways', body: 'Only your relayer can mint. Lose its key and those transfers can never be minted.' },
-		{ title: 'Sponsor is a signer', body: 'Allow only your calls, one send, no sponsor-owned inputs, a gas cap.' },
-		{ title: 'Empty relayer, odd error', body: 'Base RPC said "Missing or invalid parameters" at 0 ETH. Check the balance, report Ready.' },
-	], { y: 2.8, h: 1.94 });
+		{ title: 'V2 is not V1', body: 'On Sui the handler burns the coin. Bridge Kit only knows Sui\'s V1 contracts.' },
+		{ title: 'Sui is standard only', body: 'Fast is N/A from Sui, and the fee API has no Sui quotes.' },
+		{ title: 'Prepare, then sign', body: 'Resolve coinWithBalance with a client before the wallet sees the PTB.' },
+		{ title: '404 is pending', body: 'Iris has not indexed the burn yet. Never show failed.' },
+		{ title: 'Save the burn first', body: 'Record the hash before the receipt, or a retry burns twice.' },
+		{ title: 'Check the recipient', body: 'Sui is 32 bytes, EVM 20. Circle mints to whatever you give it.' },
+	], { y: 2.5, h: 1.6, bodySize: 13.5 });
+	d.bar(s, 'Take home: CCTP moves the dollars. Your app is the wallets, the route, the gas and the truth about a half-done transfer.', 6.25);
 }
-
-// 12 Build it
-{
-	const s = d.slide({
-		tone: 'dark',
-		eyebrow: 'BUILD IT',
-		title: 'Run Corridor yourself',
-		subtitle: 'Node 22+, pnpm, the Sui CLI for the Move part, testnet USDC from faucet.circle.com.',
-		note: {
-			explain: 'Two levels. Level one: use the class corridor from the app or the scripts with your own wallet. Level two: publish your own copy of the Move package, open your own corridor with your own fee and relayer, and point shared/deployment.json at it.',
-			show: 'Live: pnpm send 0.2 from the terminal, then watch the same transfer appear in the app via Recover.',
-			ask: 'You open your own corridor at 1 percent. What else must you change before your relayer will mint your transfers?',
-			answer: 'The relayer must be your EVM key (the destination caller you passed to open), and corridorSender must be computed from your package id. The relayer rejects messages from any other sender.',
-			next: 'What to take home.',
-			refs: `${REPO} ; ${LIVE}`,
-		},
-	});
-	d.code(s, [
-		'git clone https://github.com/Nuel-osas/day2-corridor',
-		'cd day2-corridor && pnpm install',
-		'cp .env.example .env   # your testnet keys',
-		'pnpm dev               # http://localhost:5293',
-		'pnpm move:test         # 10 Move tests',
-		'pnpm send 0.2          # Sui -> Base Sepolia',
-		'pnpm inbound 0.5       # Base Sepolia -> Sui',
-		'pnpm relay out <digest>',
-		'',
-		'# your own corridor',
-		'cd move/corridor && sui client publish',
-		'pnpm open-corridor 100 10000   # 1%, min 0.01',
-	].join('\n'), { w: 6.95, lang: 'SHELL', size: 10.5 });
-	const x = M + 7.25, w = CW - 7.25;
-	[
-		['Get USDC', 'faucet.circle.com, Sui testnet'],
-		['Quote', 'Fee and net, as the Move computes it'],
-		['Bridge', 'Sign with 0 SUI; Corridor pays'],
-		['Watch', 'Burned, attested, minted'],
-		['Recover', 'Reload or paste the digest'],
-	].forEach(([t, b], i) => {
-		const y = 2.88 + i * 0.79;
-		mono(s, String(i + 1).padStart(2, '0'), x, y + 0.04, 0.5, 0.25, 12, C.peri);
-		text(s, t, x + 0.55, y, w - 0.55, 0.34, 18, C.near);
-		text(s, b, x + 0.55, y + 0.36, w - 0.55, 0.3, 13.5, C.dim);
-	});
-}
-
-// 13 Take home
-d.statement({
-	eyebrow: 'TAKE HOME',
-	line1: 'Circle moves the dollars. You run the corridor.',
-	line2: 'A fee Move enforces.\nGas the user never sees.',
-	body: 'CCTP V2 is live on Sui and a Sui burn is attested in seconds. Put your fee in the same PTB as the burn, let CCTP name your package as the sender, pay both gas bills, and keep the relayer stateless so a half-done transfer is always safe to finish.',
-	note: {
-		explain: 'Three things to remember: the V2 burn on Sui is a four-call PTB you can wrap; your package can be the provable sender; and a bridge is judged on its half-done states, so read the chains instead of keeping your own copy.',
-		show: 'Leave the corridor card on screen with the fees collected during class.',
-		ask: 'What would you add before taking Corridor to mainnet?',
-		answer: 'Audits, a relayer queue with one job per nonce, monitoring of relayer and sponsor balances, rate limits on the sponsor, a fee withdrawal policy, and mainnet ids checked the same way we checked testnet.',
-		next: 'Day 3: Hashi. Bitcoin on Sui, and what it takes to build a Bitcoin bridge.',
-	},
-});
 
 const header = `# Day 2 Speaker Notes: Build Your Own Bridge
 
-Keys, Dollars and Bitcoin, Day 2, SuiHub Lagos. Deck: teaching/Day2_Build_Your_Own_Bridge.pptx (13 slides, rebuilt with \`pnpm slides\`). App: ${LIVE}. Repo: ${REPO}.
+Keys, Dollars and Bitcoin, Day 2, SuiHub Lagos. Deck: teaching/Day2_Build_Your_Own_Bridge.pptx (13 slides, rebuilt with \`pnpm slides\`). The product we model: ${PRODUCT}. Class app: ${LIVE}. Repo: ${REPO}.
 
 ## Before class
 
-- Fund the relayer with Base Sepolia ETH (0xd1f2CBd5797545FA97410056304CDF1b35865cAe) and check the corridor card shows "Relayer gas left" above zero. Then \`pnpm relay out <digest>\` for any transfer still in Ready.
-- Fund the demo Base wallet (0x0E0cacEa53366bF31Bf6938F51ea8E96d1EBBDC4) with Base Sepolia USDC and a little ETH, and run \`pnpm inbound 0.5\` once.
-- Run \`APP_URL=${LIVE} pnpm e2e\` (it requires the mint by default).
-- Check the operator still has testnet SUI (corridor card or /api/config) and the demo Sui wallet has USDC.
-- Students need Node 22+, pnpm, a browser, and testnet USDC on Sui from faucet.circle.com. MetaMask with Base Sepolia only for the inbound part.
+- Install MetaMask and Slush in the presenting browser. Fund the MetaMask account with Base Sepolia ETH and USDC, and the Slush account with testnet SUI and USDC (faucet.circle.com, faucet.sui.io).
+- Run one transfer per route you will show (Base to Arbitrum, Base to Sui, Sui to Base) and check each reaches Done.
+- Check the Corridor relayer and operator still have gas: /api/config shows both.
+- Students need Node 22+, pnpm, a browser with MetaMask and Slush, and testnet USDC.
 
 ## Run of show (about two hours)
 
 | Slides | Minutes | What happens |
 |---|---|---|
-| 1 to 3 | 15 | The one idea, what is live on Sui |
-| 4 to 6 | 25 | The four-call burn, the Move fee, Bridge Kit compared |
-| 7 to 9 | 25 | Who pays, the relayer, the half-done states (reload and recover live) |
-| 10 to 11 | 10 | Proof on the explorers, the gotchas |
-| 12 | 40 | Everyone bridges with 0 SUI; volunteers open their own corridor |
-| 13 | 5 | Take home, Day 3 preview |
+| 1 to 3 | 15 | The product on bridge.setsuna.finance, the one idea, the six parts |
+| 4 to 5 | 15 | What is live on Sui, the four steps |
+| 6 to 8 | 30 | Wallets, Bridge Kit for EVM, our PTBs for Sui (live transfers) |
+| 9 to 11 | 20 | Who pays gas, the fee, half-done states (reload and find by hash live) |
+| 12 to 13 | 10 | Proof, gotchas, take home |
+| hands on | 30 | Everyone bridges between Sui and Base with their own wallets |
 
 `;
 

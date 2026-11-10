@@ -26,8 +26,4 @@ Fonts are under the SIL Open Font License; the licences are in `fonts/`.
 
 ## Day 2 specifics
 
-The kit is copied unchanged from the Day 1 repo. Slide 10 reads `MINTED_OUT`, `BURN_IN` and `MINTED_IN` from the environment, so once the Base mint and the inbound run are verified you rebuild with their transaction ids instead of the "pending" rows:
-
-```sh
-MINTED_OUT=0x... MINTED_IN=<sui digest> pnpm slides && pnpm slides:pdf
-```
+The kit is copied unchanged from the Day 1 repo. The deck teaches the app in this repo: a bridge built the way bridge.setsuna.finance is, with users' own wallets, Bridge Kit for EVM routes, our own PTBs for Sui routes, and a choice of who pays the gas. Slide 12 (Proof) lists transactions from the 10 November run on the live site (`RUN` at the top of `generate-slides.cjs`); a row whose id is missing prints as "pending", never as done.
