@@ -11,3 +11,4 @@ scripts/.shots
 scripts/.e2e-result.json
 scripts/.out
 move
+scripts/.e2e-bridge.json
